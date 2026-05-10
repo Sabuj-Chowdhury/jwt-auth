@@ -45,6 +45,7 @@ trait ApiResponse
                 'token_type' => 'bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
             ],
+            // TODO: error needs to present
         ]);
     }
 }
