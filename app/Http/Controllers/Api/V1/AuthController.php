@@ -2,69 +2,79 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ChangePasswordRequest;
+use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\UserRegisterRequest;
-use App\Models\User;
-use Illuminate\Http\Request;
+use App\Http\Responses\ApiResponse;
+use App\Services\AuthService;
 
 class AuthController extends Controller
 {
+    use ApiResponse;
 
+    public function __construct(
+        protected AuthService $authService
+    ) {}
 
     public function register(UserRegisterRequest $request)
     {
-        $validateDate = $request->validated();
+        $result = $this->authService->register($request->validated());
 
-        // create user 
-        $user = User::create([
-            'name' => $validateDate['name'],
-            'email' => $validateDate['email'],
-            'password' => bcrypt($validateDate['password'])
-        ]);
-
-        $token = auth('api')->login($user);
-
-        return $this->respondWithToken($token);
+        return $this->respondWithToken($result['token']);
     }
 
-
-    public function login()
+    public function login(LoginRequest $request)
     {
-        $credentials = request(['email', 'password']);
+        $token = $this->authService->login($request->validated());
 
-        if (! $token = auth('applications')->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        if (!$token) {
+            return $this->error('Invalid credentials', 401);
         }
 
         return $this->respondWithToken($token);
     }
 
-
     public function me()
     {
-        return response()->json(auth()->user());
-    }
+        $user = $this->authService->me();
 
+        if (!$user) {
+            return $this->error('Unauthorized', 401);
+        }
+
+        return $this->success('Success', $user);
+    }
 
     public function logout()
     {
-        auth()->logout();
+        $this->authService->logout();
 
-        return response()->json(['message' => 'Successfully logged out']);
+        return $this->success('Successfully logged out');
     }
 
     public function refresh()
     {
-        return $this->respondWithToken(auth()->refresh());
+        $token = $this->authService->refresh();
+
+        if (!$token) {
+            return $this->error('Could not refresh token', 401);
+        }
+
+        return $this->respondWithToken($token);
     }
 
-    protected function respondWithToken($token)
+    public function changePassword(ChangePasswordRequest $request)
     {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60
-        ]);
+        $success = $this->authService->changePassword(
+            $request->validated()['current_password'],
+            $request->validated()['new_password']
+        );
+
+        if (!$success) {
+            return $this->error('Current password is incorrect', 400);
+        }
+
+        return $this->success('Password changed successfully. Please login again.');
     }
 }
