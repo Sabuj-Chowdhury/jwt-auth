@@ -10,12 +10,14 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        // Default admin account — change password in production
         User::create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
         ]);
 
+        // Generic test user for development
         User::create([
             'name' => 'Test User',
             'email' => 'test@example.com',

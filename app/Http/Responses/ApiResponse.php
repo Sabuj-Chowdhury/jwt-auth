@@ -4,6 +4,7 @@ namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
 
+// Consistent response shape across all endpoints — consumers appreciate predictability
 trait ApiResponse
 {
     protected function success(string $message, mixed $data = null, int $code = 200): JsonResponse
