@@ -33,7 +33,7 @@ class AuthService
 
     public function me(): ?User
     {
-        return auth('api')->user();
+        return auth('api')->user()?->load('role.permissions');
     }
 
     public function logout(): void

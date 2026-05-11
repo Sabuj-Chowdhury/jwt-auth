@@ -33,6 +33,13 @@ class UserFactory extends Factory
         ];
     }
 
+    public function withRole(string $roleId): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => $roleId,
+        ]);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */
